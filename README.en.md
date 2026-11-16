@@ -42,29 +42,6 @@ npm run ios
 
 Bilingual UI with one tap. In Chinese mode titles and abstracts are **machine-translated on the fly** — the translation is shown as the title, the original is kept underneath.
 
-## Design notes
-
-### Why "last 3 days" actually means 3 days
-
-Crossref only lets you page through results sorted by `created` / `published`, so taking the first N records covers a few hours at best. Instead:
-
-1. **Bucket by day** — a 3-day window fires 3 requests, one per day, so every day in the window gets a share of the quota;
-2. **Cursor paging** — inside each day, page with `cursor=*` until exhausted (Crossref rejects `sort` together with cursor paging with a 400, so results are sorted locally);
-3. **Filter by publication date** — `from-pub-date` / `until-pub-date`, the same date shown on the card;
-4. **Second pass on ingestion date** — journals like Cell only publish a year-month, so a `from-created-date` pass fills those in, keeping only records whose year-month matches;
-5. **Quota per day** — the 60-item cap is split as "60 ÷ days", otherwise the busiest day eats the whole quota;
-6. **Cache per day** — past days for 24h, today for 10 minutes.
-
-`src/logic/feed.ts` handles 1/5/6; `papersInDay` in `src/api/crossref.ts` handles 2/3/4.
-
-### Translation
-
-The default channel is **Tencent TranSmart** (no API key, multiple segments per request, reachable from mainland China); if it fails, MyMemory (about 5k characters/day anonymously) takes over. Configure an OpenAI-compatible endpoint (base URL / key / model) in settings and it gets priority — best quality, no limits.
-
-Translation starts as soon as a list renders, 8–20 titles per batch in parallel. Switching to Chinese paints from the local translation cache first (zero requests) and only fills the gaps. Finished translations are cached permanently. When offline or out of quota, the app silently keeps the English text.
-
-> The keyless channels are machine translation, so chemistry can come out as `MgSc 2 Se 4`. Bring your own key if that matters.
-
 ## Data sources
 
 | Purpose | Endpoint |
