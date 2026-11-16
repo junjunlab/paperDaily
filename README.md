@@ -77,35 +77,6 @@ Crossref 只支持按 `created` / `published` 倒序翻页，直接取前 N 条�
 
 **没有后端，也不需要备案域名** —— 这是 App 相对小程序最大的一处简化：小程序要配 request 合法域名、要 ICP 备案，App 直接联网即可。
 
-## 目录结构
-
-```
-App.tsx                       tab 容器 + 路由（状态式，无导航库）
-src/
-  api/crossref.ts             Crossref 封装：列表 / 搜索 / 期号 / 本期文章 / 封面推导
-  api/europepmc.ts            摘要补全（PubMed / OpenAlex / S2 多源）
-  api/translate.ts            OpenAI 兼容 + 腾讯 + MyMemory 三通道翻译
-  api/http.ts                 fetch + 超时 + 429 退避 + 限并发
-  components/                 PaperCard / DetailModal / PicksCard / JournalPanel / 通用 UI
-  data/catalog.ts             ⚠️ 自动生成：160 本刊的 ISSN / 领域 / 影响因子
-  data/subdomains.ts          99 个二级方向（中文名 + 英文名 + 判别关键词）
-  data/cns-issues.json        ⚠️ 自动生成：CNS 当期快照（scripts/bake-issues.mjs）
-  logic/feed.ts               按天分桶、配额取样、缓存
-  logic/classify.ts           按 ISSN 归领域，退化到特征词打分；二级方向打分
-  logic/picks.ts              每日精选的打分与去重
-  logic/follows.ts            关注刊「有新文」判定
-  screens/                    PapersScreen / IssuesScreen / IssueScreen / FavoritesScreen / MeScreen / SettingsScreen
-  store/storage.ts            AsyncStorage：偏好 / 统计 / 收藏 / 关注 / 缓存
-scripts/                      数据烘焙、连通性自检、无头浏览器验收
-```
-
-数据没有手抄：`catalog.ts` 由 `scripts/extract-catalog.mjs` 从同作者的微信小程序工程抽取生成（**该工程不在本仓库**，`catalog.ts` 已生成好，直接用即可）。要改数据就改源工程再重新生成。
-
-```bash
-node scripts/bake-issues.mjs   # 重烘 CNS 当期快照
-node scripts/check-api.mjs     # 验证 Crossref / Europe PMC 可达
-```
-
 ## 在线构建安装包（GitHub Actions）
 
 仓库自带 `.github/workflows/build.yml`：**推到 master 就自动构建两端**，也可以在 Actions 页面点「Run workflow」手动触发（只改 README / docs 不触发）。
@@ -136,25 +107,6 @@ eas build -p ios                           # .ipa，需 Apple 开发者账号
 ```
 
 包名已配好 `com.paperdaily.app`（在 `app.json`，换成你自己的域名倒序）。国内分发可以只出 APK 直接发，不经过商店。
-
-## 图标
-
-`assets/icon.png`（1024）、`assets/android-icon-*.png`（自适应三件套）、`favicon.png`、`splash-icon.png` 全部由 `scripts/make-icon.py` 从同一张源图派生：源图是圆角 + 透明四角的方形海报，而 iOS 要求满幅不透明，所以先按「每行不透明像素的中位色」把四角补齐，再生成各尺寸（安卓前景缩到 67% 居中，留出遮罩裁切余量）。
-
-## 自检
-
-```bash
-npm run typecheck              # TypeScript 全量检查（0 错误）
-npm run api:check              # Crossref / Europe PMC 是否可达
-npx expo export -p android     # 生产包能否构建
-```
-
-`scripts/verify-*.cjs` 是一组无头浏览器验收脚本（时间窗严格性、联想面板、四个 tab、收藏、关注角标、顶刊页耗时），跑之前先把 dev server 起在 8082：
-
-```bash
-npx expo start --web --port 8082
-node scripts/verify-issues-speed.cjs   # 顶刊页三种进入场景的耗时
-```
 
 ## 已知边界
 

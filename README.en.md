@@ -77,35 +77,6 @@ Translation starts as soon as a list renders, 8–20 titles per batch in paralle
 
 **No backend and no domain filing required.** This is the biggest simplification compared with the original WeChat Mini Program, which needed registered request domains and an ICP filing — a native app just makes the request.
 
-## Project layout
-
-```
-App.tsx                       tab container + routing (state-based, no navigation library)
-src/
-  api/crossref.ts             Crossref: list / search / issues / issue contents / cover derivation
-  api/europepmc.ts            abstract fallback (PubMed / OpenAlex / S2)
-  api/translate.ts            three translation channels
-  api/http.ts                 fetch + timeout + 429 backoff + concurrency limit
-  components/                 PaperCard / DetailModal / PicksCard / JournalPanel / shared UI
-  data/catalog.ts             ⚠️ generated: ISSN / field / impact factor for 160 journals
-  data/subdomains.ts          99 sub-fields (Chinese + English names + keywords)
-  data/cns-issues.json        ⚠️ generated: current-issue snapshot (scripts/bake-issues.mjs)
-  logic/feed.ts               day buckets, quota sampling, caching
-  logic/classify.ts           field by ISSN, keyword scoring fallback, sub-field scoring
-  logic/picks.ts              daily-pick scoring and de-duplication
-  logic/follows.ts            "has new papers" detection for followed journals
-  screens/                    PapersScreen / IssuesScreen / IssueScreen / FavoritesScreen / MeScreen / SettingsScreen
-  store/storage.ts            AsyncStorage: prefs / stats / saved / follows / caches
-scripts/                      data baking, connectivity checks, headless-browser verification
-```
-
-Nothing here is hand-typed data: `catalog.ts` was extracted from the author's WeChat Mini Program project by `scripts/extract-catalog.mjs` (**that project is not part of this repo** — the generated `catalog.ts` is checked in and works as-is).
-
-```bash
-node scripts/bake-issues.mjs   # regenerate the CNS current-issue snapshot
-node scripts/check-api.mjs     # check Crossref / Europe PMC reachability
-```
-
 ## Building on GitHub (Actions)
 
 The repo ships `.github/workflows/build.yml`: **every push to master builds both platforms**, and you can also hit "Run workflow" on the Actions tab (docs-only changes are skipped).
@@ -136,25 +107,6 @@ eas build -p ios                           # .ipa, needs an Apple Developer acco
 ```
 
 The bundle id is set to `com.paperdaily.app` in `app.json` (change it to your own reverse domain). For distribution in China you can ship the APK directly, no store required.
-
-## Icons
-
-`assets/icon.png` (1024) and `assets/android-icon-*.png` (adaptive icon set), plus `favicon.png` and `splash-icon.png`, are all derived from one source image by `scripts/make-icon.py`. The source is a rounded square with transparent corners while iOS wants a fully opaque square, so the corners are filled with the median colour of each row's opaque pixels first, then every size is generated (the adaptive foreground is scaled to 67% and centred to leave room for any mask).
-
-## Checks
-
-```bash
-npm run typecheck              # full TypeScript check (0 errors)
-npm run api:check              # Crossref / Europe PMC reachability
-npx expo export -p android     # production bundle builds
-```
-
-`scripts/verify-*.cjs` is a set of headless-browser acceptance scripts (strict date windows, suggestion panel, tabs, saved papers, follow badges, journals-tab timing). Start the dev server on port 8082 first:
-
-```bash
-npx expo start --web --port 8082
-node scripts/verify-issues-speed.cjs   # timing for the three ways into the journals tab
-```
 
 ## Known limits
 
