@@ -39,3 +39,14 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# 本地验证产物
+.web-check*/
+.export-check/
+
+# 数据源中间产物（JCR 原始 CSV 不宜随仓库分发）
+scripts/out/
+
+# 本地验收截图（README 只用到 docs/screenshots/）
+docs/check-*.png
+docs/expo-go-qr.png

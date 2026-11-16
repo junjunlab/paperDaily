@@ -1,0 +1,53 @@
+{
+  "at": "2026-11-16",
+  "list": [
+    {
+      "key": "cell",
+      "name": "Cell",
+      "cn": "细胞",
+      "issn": "0092-8674",
+      "color": "#0e7490",
+      "site": "https://www.cell.com/cell/current",
+      "volume": "189",
+      "issue": "23",
+      "year": 2026,
+      "label": "Vol 189 · No.23",
+      "dateText": "2026-11-12",
+      "dateKind": "online",
+      "leadTitle": "Single-cell, multi-region profiling of the macaque brain across the lifespan",
+      "leadDoi": "10.1016/j.cell.2026.09.014"
+    },
+    {
+      "key": "nature",
+      "name": "Nature",
+      "cn": "自然",
+      "issn": "0028-0836",
+      "color": "#b91c1c",
+      "site": "https://www.nature.com/nature/current-issue",
+      "volume": "659",
+      "issue": "8140",
+      "year": 2026,
+      "label": "Vol 659 · No.8140",
+      "dateText": "2026-11-12",
+      "dateKind": "print",
+      "leadTitle": "Scale-rich network-based metamaterials",
+      "leadDoi": "10.1038/s41586-026-11191-2"
+    },
+    {
+      "key": "science",
+      "name": "Science",
+      "cn": "科学",
+      "issn": "0036-8075",
+      "color": "#1d4ed8",
+      "site": "https://www.science.org/toc/science/current",
+      "volume": "394",
+      "issue": "6825",
+      "year": 2026,
+      "label": "Vol 394 · No.6825",
+      "dateText": "2026-11-12",
+      "dateKind": "print",
+      "leadTitle": "Oxygen tells the tale of Earth’s carbon sinks",
+      "leadDoi": "10.1126/science.aem7174"
+    }
+  ]
+}
