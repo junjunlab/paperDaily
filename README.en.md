@@ -123,6 +123,21 @@ node scripts/bake-issues.mjs   # regenerate the CNS current-issue snapshot
 node scripts/check-api.mjs     # check Crossref / Europe PMC reachability
 ```
 
+## Building on GitHub (Actions)
+
+The repo ships `.github/workflows/build.yml`: **every push to master builds both platforms**, and you can also hit "Run workflow" on the Actions tab (docs-only changes are skipped).
+
+| Artifact | What it is |
+|---|---|
+| `PaperDaily-android-apk` | Release APK signed with the Expo template's debug keystore — **install it as-is** |
+| `PaperDaily-ios-ipa-unsigned` | **Unsigned** IPA — needs your own signing before it installs (Sideloadly / AltStore, or re-sign with a developer account) |
+
+Download from Actions → pick a run → Artifacts at the bottom (kept 90 days).
+
+- iOS is unsigned because signing needs an Apple Developer certificate and provisioning profile, which cannot live in a public repo; use EAS Build below for an installable IPA.
+- Fine for personal use, but **swap the keystore before publishing**: `android/app/build.gradle` reuses `signingConfigs.debug` for release — generate your own and point `signingConfig` at it.
+- The workflow runs `expo prebuild` to generate the native projects on the fly; `android/` and `ios/` are not committed (both are gitignored).
+
 ## Building installable binaries (EAS Build)
 
 No Android SDK or Xcode needed locally — build in the cloud:
@@ -160,7 +175,7 @@ node scripts/verify-issues-speed.cjs   # timing for the three ways into the jour
 
 ## Known limits
 
-- **No binary is built in this repo** — there is no Android SDK or Xcode in the environment; use EAS Build or a local toolchain.
+- **No binary is built in this repo** — the `.apk` comes from GitHub Actions (above), the `.ipa` needs your own signing, or use EAS Build / a local toolchain.
 - **The CNS snapshot ages** — it stays on the last baked issue until regenerated (a successful background refresh updates it; on failure the footer says so).
 - **No real cover for Science** — the whole site sits behind a Cloudflare challenge, and cover URLs are per-issue random GUIDs that cannot be derived from the issue number.
 - **Keyless translation has a daily quota** — when it runs out, translation pauses and English is shown; configure a key for something stable.

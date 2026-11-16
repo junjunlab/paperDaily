@@ -123,6 +123,21 @@ node scripts/bake-issues.mjs   # 重烘 CNS 当期快照
 node scripts/check-api.mjs     # 验证 Crossref / Europe PMC 可达
 ```
 
+## 在线构建安装包（GitHub Actions）
+
+仓库自带 `.github/workflows/build.yml`：**推到 master 就自动构建两端**，也可以在 Actions 页面点「Run workflow」手动触发（只改 README / docs 不触发）。
+
+| Artifact | 说明 |
+|---|---|
+| `PaperDaily-android-apk` | release APK，用 Expo 模板自带的 debug keystore 签名，**下载后直接安装** |
+| `PaperDaily-ios-ipa-unsigned` | **未签名** IPA，需要自己签名才能装（Sideloadly / AltStore，或有开发者账号重签） |
+
+下载：Actions → 选一次运行 → 页面底部 Artifacts（保留 90 天）。
+
+- iOS 未签名是因为签名需要 Apple 开发者账号的证书和 provisioning profile，不能放进公开仓库；要出可直装的 ipa 走下面的 EAS Build。
+- 自用够了，但**上架要换 keystore**：`android/app/build.gradle` 里 release 默认复用 `signingConfigs.debug`，请生成自己的并改 `signingConfig`。
+- 构建流程是 `expo prebuild` 现生成原生工程再编译，仓库里不存 `android/` `ios/` 目录（都在 `.gitignore` 里）。
+
 ## 打正式安装包（EAS Build）
 
 本机不需要 Android SDK / Xcode，用 Expo 云构建：
@@ -160,7 +175,7 @@ node scripts/verify-issues-speed.cjs   # 顶刊页三种进入场景的耗时
 
 ## 已知边界
 
-- **没有在本仓库编译出安装包**：环境里没有 Android SDK / Xcode，`.apk` / `.ipa` 需要 EAS Build 或本地装工具链。
+- **仓库里没有编译好的包**：`.apk` 由 GitHub Actions 构建（见上），`.ipa` 需要自行签名，或用 EAS Build / 本地工具链。
 - **CNS 快照会过期**：不重烘就停在旧期号（后台刷新成功会自动更新，失败时页脚会提示）。
 - **Science 没有真封面**：全站 Cloudflare 挑战，封面 URL 是每期随机 guid、无法从期号推导，只能用版式封面。
 - **免密钥翻译有每日配额**：额度用尽时译文暂停、保持英文，恢复后继续；要稳定就配 Key。

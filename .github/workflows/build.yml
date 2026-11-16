@@ -1,0 +1,115 @@
+name: Build installable packages
+
+# 代码有变动就构建两端安装包；只改文档不触发。
+# 也可以在 Actions 页面点 "Run workflow" 手动跑。
+on:
+  push:
+    branches: [master]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android:
+    name: Android APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate native project
+        run: npx expo prebuild --platform android --clean --no-install
+
+      - name: Build release APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          # Expo 模板里 release 复用 debug keystore，所以产物可以直接装；
+          # 要上架商店请换成自己的 keystore（见 README）。
+          ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p out
+          cp android/app/build/outputs/apk/release/*.apk out/PaperDaily.apk
+          ls -lh out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PaperDaily-android-apk
+          path: out/PaperDaily.apk
+          if-no-files-found: error
+          retention-days: 90
+
+  ios:
+    name: iOS IPA (unsigned)
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate native project
+        run: npx expo prebuild --platform ios --clean --no-install
+
+      - name: Install pods
+        working-directory: ios
+        run: pod install
+
+      - name: Build app (no signing)
+        run: |
+          WORKSPACE=$(ls -d ios/*.xcworkspace | head -1)
+          SCHEME=$(xcodebuild -workspace "$WORKSPACE" -list -json | jq -r '.workspace.schemes[0]')
+          echo "workspace=$WORKSPACE scheme=$SCHEME"
+          xcodebuild \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath "$RUNNER_TEMP/ios-build" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Pack unsigned IPA
+        run: |
+          APP=$(find "$RUNNER_TEMP/ios-build/Build/Products/Release-iphoneos" -maxdepth 1 -name "*.app" | head -1)
+          echo "app=$APP"
+          mkdir -p out/Payload
+          cp -R "$APP" out/Payload/
+          cd out
+          zip -qry PaperDaily-unsigned.ipa Payload
+          ls -lh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PaperDaily-ios-ipa-unsigned
+          path: out/PaperDaily-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 90
