@@ -3,6 +3,7 @@
 [中文](README.md) | **English**
 
 [![Build](https://github.com/junjunlab/paperDaily/actions/workflows/build.yml/badge.svg)](https://github.com/junjunlab/paperDaily/actions/workflows/build.yml)
+[![Release](https://img.shields.io/github/v/release/junjunlab/paperDaily?color=1d4ed8&label=release)](https://github.com/junjunlab/paperDaily/releases/latest)
 [![Stars](https://img.shields.io/github/stars/junjunlab/paperDaily?color=eab308)](https://github.com/junjunlab/paperDaily/stargazers)
 ![Platforms](https://img.shields.io/badge/platforms-iOS%20%7C%20Android-1d4ed8)
 ![Expo](https://img.shields.io/badge/Expo-58-000020?logo=expo&logoColor=white)
@@ -37,7 +38,7 @@ npm run android
 npm run ios
 ```
 
-> No `.apk` / `.ipa` is checked in. Use Expo Go for device preview and EAS Build for installable binaries (see below).
+> Not here to read code? Grab a build from [**Releases**](https://github.com/junjunlab/paperDaily/releases/latest): `PaperDaily.apk` installs on Android; the iOS ipa is unsigned and needs self-signing (see below).
 
 ## Features
 
@@ -64,14 +65,26 @@ Bilingual UI with one tap. In Chinese mode titles and abstracts are **machine-tr
 
 ## Building on GitHub (Actions)
 
-The repo ships `.github/workflows/build.yml`: **every push to master builds both platforms**, and you can also hit "Run workflow" on the Actions tab (docs-only changes are skipped).
+### Releases: push a tag
 
-| Artifact | What it is |
-|---|---|
-| `PaperDaily-android-apk` | Release APK signed with the Expo template's debug keystore — **install it as-is** |
-| `PaperDaily-ios-ipa-unsigned` | **Unsigned** IPA — needs your own signing before it installs (Sideloadly / AltStore, or re-sign with a developer account) |
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
 
-Download from Actions → pick a run → Artifacts at the bottom (kept 90 days).
+`.github/workflows/release.yml` builds both platforms and attaches the packages to the Release for that tag (marked Latest). Stable download URLs afterwards:
+
+- APK: <https://github.com/junjunlab/paperDaily/releases/latest/download/PaperDaily.apk>
+- IPA: <https://github.com/junjunlab/paperDaily/releases/latest/download/PaperDaily-unsigned.ipa>
+
+| File | Platform | Notes |
+|---|---|---|
+| `PaperDaily.apk` | Android 7.0+ | Install as-is; allow "install from unknown sources" the first time |
+| `PaperDaily-unsigned.ipa` | iOS | **Unsigned** — sign it yourself: Sideloadly / AltStore (free Apple ID, 7-day expiry) or re-sign with a developer account |
+
+### Every day: artifacts on master
+
+`.github/workflows/build.yml`: **every push to master builds both platforms**, and you can also hit "Run workflow" on the Actions tab (docs-only changes are skipped). Grab the files from Actions → a run → Artifacts, kept 90 days — **signing in to GitHub is required**.
 
 - iOS is unsigned because signing needs an Apple Developer certificate and provisioning profile, which cannot live in a public repo; use EAS Build below for an installable IPA.
 - Fine for personal use, but **swap the keystore before publishing**: `android/app/build.gradle` reuses `signingConfigs.debug` for release — generate your own and point `signingConfig` at it.

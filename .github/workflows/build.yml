@@ -9,6 +9,8 @@ on:
       - '**/*.md'
       - 'docs/**'
   workflow_dispatch:
+  # release.yml 里打 tag 时复用这个工作流，产物再挂到 Release 上
+  workflow_call:
 
 concurrency:
   group: build-${{ github.ref }}

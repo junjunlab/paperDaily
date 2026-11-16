@@ -3,6 +3,7 @@
 **中文** | [English](README.en.md)
 
 [![Build](https://github.com/junjunlab/paperDaily/actions/workflows/build.yml/badge.svg)](https://github.com/junjunlab/paperDaily/actions/workflows/build.yml)
+[![Release](https://img.shields.io/github/v/release/junjunlab/paperDaily?color=1d4ed8&label=release)](https://github.com/junjunlab/paperDaily/releases/latest)
 [![Stars](https://img.shields.io/github/stars/junjunlab/paperDaily?color=eab308)](https://github.com/junjunlab/paperDaily/stargazers)
 ![Platforms](https://img.shields.io/badge/platforms-iOS%20%7C%20Android-1d4ed8)
 ![Expo](https://img.shields.io/badge/Expo-58-000020?logo=expo&logoColor=white)
@@ -37,7 +38,7 @@ npm run android
 npm run ios
 ```
 
-> 仓库里没有编译好的 `.apk` / `.ipa`。真机预览走 Expo Go，正式安装包走 EAS Build（见下文）。
+> 不想看代码？直接去 [**Releases**](https://github.com/junjunlab/paperDaily/releases/latest) 下载安装包：安卓装 `PaperDaily.apk`；iOS 的 ipa 未签名，需要自签（见下文）。
 
 ## 功能
 
@@ -64,14 +65,26 @@ npm run ios
 
 ## 在线构建安装包（GitHub Actions）
 
-仓库自带 `.github/workflows/build.yml`：**推到 master 就自动构建两端**，也可以在 Actions 页面点「Run workflow」手动触发（只改 README / docs 不触发）。
+### 发版：打 tag 就生成 Release
 
-| Artifact | 说明 |
-|---|---|
-| `PaperDaily-android-apk` | release APK，用 Expo 模板自带的 debug keystore 签名，**下载后直接安装** |
-| `PaperDaily-ios-ipa-unsigned` | **未签名** IPA，需要自己签名才能装（Sideloadly / AltStore，或有开发者账号重签） |
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
 
-下载：Actions → 选一次运行 → 页面底部 Artifacts（保留 90 天）。
+`.github/workflows/release.yml` 会自动构建 Android / iOS，把安装包挂到这个 tag 的 Release 上（标记为 Latest）。之后固定下载地址一直可用：
+
+- APK：<https://github.com/junjunlab/paperDaily/releases/latest/download/PaperDaily.apk>
+- IPA：<https://github.com/junjunlab/paperDaily/releases/latest/download/PaperDaily-unsigned.ipa>
+
+| 文件 | 平台 | 说明 |
+|---|---|---|
+| `PaperDaily.apk` | Android 7.0+ | 直接安装，首次需允许「安装未知来源应用」 |
+| `PaperDaily-unsigned.ipa` | iOS | **未签名**，需自己签：Sideloadly / AltStore（免费 Apple ID 签 7 天），或开发者账号重签 |
+
+### 日常：推到 master 出临时包
+
+`.github/workflows/build.yml`：**推到 master 就构建两端**，也可以在 Actions 页面点「Run workflow」手动触发（只改 README / docs 不触发）。产物在 Actions → 某次运行 → 底部 Artifacts，保留 90 天，**需要登录 GitHub 才能下载**。
 
 - iOS 未签名是因为签名需要 Apple 开发者账号的证书和 provisioning profile，不能放进公开仓库；要出可直装的 ipa 走下面的 EAS Build。
 - 自用够了，但**上架要换 keystore**：`android/app/build.gradle` 里 release 默认复用 `signingConfigs.debug`，请生成自己的并改 `signingConfig`。
