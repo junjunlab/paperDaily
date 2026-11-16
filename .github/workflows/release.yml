@@ -21,6 +21,9 @@ jobs:
     permissions:
       contents: write
     steps:
+      # gh release 需要在本仓库里跑（要读 tag / 提交信息），少了这步会报 not a git repository
+      - uses: actions/checkout@v4
+
       - uses: actions/download-artifact@v4
         with:
           path: dist
@@ -58,13 +61,14 @@ jobs:
           TAG="${GITHUB_REF_NAME}"
           sed -i "s/__TAG__/${TAG}/g" notes.md
           FILES="dist/PaperDaily.apk dist/PaperDaily-unsigned.ipa"
-          if gh release view "$TAG" >/dev/null 2>&1; then
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             # 重跑同一个 tag：覆盖附件，别报「已存在」
-            gh release upload "$TAG" $FILES --clobber
-            gh release edit "$TAG" --notes-file notes.md
+            gh release upload "$TAG" $FILES --clobber --repo "$GITHUB_REPOSITORY"
+            gh release edit "$TAG" --notes-file notes.md --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$TAG" $FILES \
               --title "一日一论文 · PaperDaily ${TAG}" \
               --notes-file notes.md \
+              --repo "$GITHUB_REPOSITORY" \
               --latest
           fi
