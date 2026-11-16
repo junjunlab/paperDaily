@@ -3,9 +3,8 @@
 **中文** | [English](README.en.md)
 
 [![Build](https://github.com/junjunlab/paperDaily/actions/workflows/build.yml/badge.svg)](https://github.com/junjunlab/paperDaily/actions/workflows/build.yml)
-[![Release](https://img.shields.io/github/v/release/junjunlab/paperDaily?color=1d4ed8&label=release)](https://github.com/junjunlab/paperDaily/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/junjunlab/paperDaily/total?color=22c55e&label=downloads)](https://github.com/junjunlab/paperDaily/releases)
-[![APK downloads](https://img.shields.io/github/downloads/junjunlab/paperDaily/PaperDaily.apk?color=22c55e&label=apk)](https://github.com/junjunlab/paperDaily/releases/latest)
+[![Release](https://img.shields.io/github/v/release/junjunlab/paperDaily?color=1d4ed8&label=release&style=flat)](https://github.com/junjunlab/paperDaily/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/junjunlab/paperDaily/total?color=22c55e&label=downloads&style=flat)](https://github.com/junjunlab/paperDaily/releases)
 [![Stars](https://img.shields.io/github/stars/junjunlab/paperDaily?color=eab308)](https://github.com/junjunlab/paperDaily/stargazers)
 ![Platforms](https://img.shields.io/badge/platforms-iOS%20%7C%20Android-1d4ed8)
 ![Expo](https://img.shields.io/badge/Expo-58-000020?logo=expo&logoColor=white)
