@@ -2,6 +2,14 @@
 
 [中文](README.md) | **English**
 
+[![Build](https://github.com/junjunlab/paperDaily/actions/workflows/build.yml/badge.svg)](https://github.com/junjunlab/paperDaily/actions/workflows/build.yml)
+[![Stars](https://img.shields.io/github/stars/junjunlab/paperDaily?color=eab308)](https://github.com/junjunlab/paperDaily/stargazers)
+![Platforms](https://img.shields.io/badge/platforms-iOS%20%7C%20Android-1d4ed8)
+![Expo](https://img.shields.io/badge/Expo-58-000020?logo=expo&logoColor=white)
+![React Native](https://img.shields.io/badge/React%20Native-0.88-61dafb?logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178c6?logo=typescript&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-22c55e)
+
 A reading app that does exactly one thing: **every day, put the newest papers from Cell, Nature, Science and ~160 other top journals in front of you — in Chinese, filtered to your field.** Native iOS / Android, built with Expo (React Native + TypeScript) from one codebase. No backend, no account, no ICP filing.
 
 ## Screens
