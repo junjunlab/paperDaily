@@ -13,6 +13,9 @@ const K = {
   followNews: 'pd.followNews',
   picks: 'pd.picks',
   picksOff: 'pd.picksOff',
+  keywords: 'pd.keywords',
+  kwKind: 'pd.kwKind',
+  kwFeed: 'pd.kwFeed',
 }
 
 /** DOI → 真实上线日期（Semantic Scholar publicationDate），用于 published 只到年月的刊 */
@@ -220,7 +223,8 @@ export async function clearCaches(): Promise<void> {
         k.startsWith('pd.day.') ||
         k.startsWith('pd.seen.') ||
         k === K.zh ||
-        k === K.issues,
+        k === K.issues ||
+        k === K.kwFeed,
     )
     if (drop.length) await AsyncStorage.multiRemove(drop)
   } catch {
@@ -320,3 +324,44 @@ export async function picksDismissed(day: string): Promise<boolean> {
 }
 
 export const dismissPicks = (day: string) => writeJson(K.picksOff, { day })
+
+// ------------------------------------------------------------ 关键词订阅
+
+/** 用户自己填的检索词，最多 5 个，存在本机 */
+export async function loadKeywords(): Promise<string[]> {
+  try {
+    const raw = await AsyncStorage.getItem(K.keywords)
+    const list = raw ? JSON.parse(raw) : []
+    return Array.isArray(list) ? list.filter((x) => typeof x === 'string' && x.trim()).slice(0, 5) : []
+  } catch {
+    return []
+  }
+}
+
+export const saveKeywords = (list: string[]) => writeJson(K.keywords, list.slice(0, 5))
+
+export const loadKeywordKind = async (): Promise<string> => {
+  const v = await AsyncStorage.getItem(K.kwKind)
+  return v || 'all'
+}
+export const saveKeywordKind = (kind: string) => AsyncStorage.setItem(K.kwKind, kind).catch(() => {})
+
+type KwFeedCache = { day: string; kind: string; papers: Paper[] }
+
+/** 关键词推荐一天只抓一次；跨天或换文章类型自动过期重抓 */
+export async function loadKeywordFeed(day: string, kind = 'all'): Promise<Paper[]> {
+  try {
+    const raw = await AsyncStorage.getItem(K.kwFeed)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as KwFeedCache
+    return parsed.day === day && (parsed.kind || 'all') === kind && Array.isArray(parsed.papers)
+      ? parsed.papers
+      : []
+  } catch {
+    return []
+  }
+}
+
+export const saveKeywordFeed = (day: string, kind: string, papers: Paper[]) =>
+  writeJson(K.kwFeed, { day, kind, papers } satisfies KwFeedCache)
+

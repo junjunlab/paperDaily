@@ -89,6 +89,8 @@ export default function PapersScreen({
   const [subKey, setSubKey] = useState('all')
   /** 二级方向折叠状态：默认只露前几个，避免一行挤 14 个 */
   const [subOpen, setSubOpen] = useState(false)
+  /** 首页筛选默认折叠，让论文列表成为首屏主体；点摘要行展开 */
+  const [filterOpen, setFilterOpen] = useState(false)
   const [journal, setJournal] = useState<JournalMeta | null>(null)
   const [panelOpen, setPanelOpen] = useState(false)
   const [sort, setSort] = useState<'date' | 'impact'>('date')
@@ -460,6 +462,21 @@ export default function PapersScreen({
     if (!k) void load()
   }
 
+  const activeDomain = DOMAINS.find((d) => d.key === prefs.domain)
+  const domainLabel =
+    prefs.domain === 'all'
+      ? prefs.lang === 'en' ? 'All' : '全部'
+      : activeDomain
+        ? prefs.lang === 'en' ? activeDomain.en : activeDomain.name
+        : ''
+  const activeRange = rangeOptions(prefs.lang).find((r) => r.key === prefs.range)
+  const rangeLabel =
+    prefs.range === 'custom' && prefs.customFrom
+      ? `${prefs.customFrom.slice(5)}~${(prefs.customTo || prefs.customFrom).slice(5)}`
+      : activeRange?.name || t.cvCustom
+  const journalLabel = journal ? journal.abbr || journal.name : t.journalAll
+  const filterParts = [domainLabel, journalLabel, keyword ? `「${keyword}」` : rangeLabel].filter(Boolean)
+
   return (
     <View style={styles.root}>
       <Header
@@ -542,6 +559,71 @@ export default function PapersScreen({
         </View>
       )}
 
+      {keyword && !journal && (
+        <View style={styles.searchScope}>
+          <Text style={styles.searchScopeText} numberOfLines={1}>
+            {t.searchScope}「{keyword}」
+          </Text>
+          <Pressable
+            onPress={() => {
+              setInput('')
+              setKeyword('')
+            }}
+            hitSlop={8}
+          >
+            <Text style={styles.searchScopeClear}>{t.clear}</Text>
+          </Pressable>
+        </View>
+      )}
+
+      <Pressable onPress={() => setFilterOpen((v) => !v)} style={styles.filterBar}>
+        <Text style={styles.filterLabel}>
+          {filterOpen ? `${t.filterHide} ${t.filterBar}` : t.filterBar}
+        </Text>
+        <Text style={styles.filterSummary} numberOfLines={1}>
+          {filterParts.join(' · ')}
+        </Text>
+        <Text style={styles.filterChevron}>{filterOpen ? '▴' : '▾'}</Text>
+      </Pressable>
+
+      {/* 关注的期刊：一行横滑的快捷入口，有新文时带红点，省得一本本点进去看 */}
+      {follows.length > 0 && (
+        <View style={styles.followStrip}>
+          <Text style={styles.followLabel}>{t.followStrip}</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ flex: 1 }}
+            contentContainerStyle={styles.followRow}
+          >
+            {follows.map((f) => {
+              const active = journal?.issn === f.issn
+              const fresh = hasNews(f, news[f.issn])
+              return (
+                <Pressable
+                  key={f.issn}
+                  onPress={() => setJournal(followMeta(f))}
+                  style={[styles.followChip, active && styles.followChipActive]}
+                >
+                  <Text
+                    style={[styles.followChipText, active && styles.followChipTextActive]}
+                    numberOfLines={1}
+                  >
+                    {f.abbr || f.name}
+                  </Text>
+                  {fresh && (
+                    <View style={styles.newDot}>
+                      <Text style={styles.newDotText}>{t.news}</Text>
+                    </View>
+                  )}
+                </Pressable>
+              )
+            })}
+          </ScrollView>
+        </View>
+      )}
+
+      {filterOpen && (
       <View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
           <Pressable
@@ -638,43 +720,6 @@ export default function PapersScreen({
           )}
         </View>
 
-        {/* 关注的期刊：一行横滑的快捷入口，有新文时带红点，省得一本本点进去看 */}
-        {follows.length > 0 && (
-          <View style={styles.followStrip}>
-            <Text style={styles.followLabel}>{t.followStrip}</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={{ flex: 1 }}
-              contentContainerStyle={styles.followRow}
-            >
-              {follows.map((f) => {
-                const active = journal?.issn === f.issn
-                const fresh = hasNews(f, news[f.issn])
-                return (
-                  <Pressable
-                    key={f.issn}
-                    onPress={() => setJournal(followMeta(f))}
-                    style={[styles.followChip, active && styles.followChipActive]}
-                  >
-                    <Text
-                      style={[styles.followChipText, active && styles.followChipTextActive]}
-                      numberOfLines={1}
-                    >
-                      {f.abbr || f.name}
-                    </Text>
-                    {fresh && (
-                      <View style={styles.newDot}>
-                        <Text style={styles.newDotText}>{t.news}</Text>
-                      </View>
-                    )}
-                  </Pressable>
-                )
-              })}
-            </ScrollView>
-          </View>
-        )}
-
         {/* 排序 */}
         <View style={[styles.chipRow, { flexDirection: 'row', alignItems: 'center' }]}>
           {([
@@ -691,23 +736,6 @@ export default function PapersScreen({
           ))}
         </View>
 
-        {keyword && !journal ? (
-          // 检索模式下时间窗不生效（检索固定看近两年），把 chip 换成说明，避免误以为还能筛
-          <View style={styles.searchScope}>
-            <Text style={styles.searchScopeText} numberOfLines={1}>
-              {t.searchScope}「{keyword}」
-            </Text>
-            <Pressable
-              onPress={() => {
-                setInput('')
-                setKeyword('')
-              }}
-              hitSlop={8}
-            >
-              <Text style={styles.searchScopeClear}>{t.clear}</Text>
-            </Pressable>
-          </View>
-        ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
             {rangeOptions(prefs.lang).map((r) => {
               const active = prefs.range === r.key
@@ -732,8 +760,8 @@ export default function PapersScreen({
               </Text>
             </Pressable>
           </ScrollView>
-        )}
       </View>
+      )}
 
       {!!keyword && !journal && !!journalHit && (
         <Pressable
@@ -907,6 +935,21 @@ const styles = StyleSheet.create({
   clear: { fontSize: 18, color: colors.faint, paddingHorizontal: 4 },
 
   chipRow: { paddingHorizontal: 16, paddingBottom: 8 },
+  filterBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginBottom: 8,
+    paddingHorizontal: 12,
+    height: 36,
+    borderRadius: radius.pill,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.line,
+  },
+  filterLabel: { fontSize: 12.5, color: colors.primary, fontWeight: '700', marginRight: 8 },
+  filterSummary: { flex: 1, fontSize: 12, color: colors.muted },
+  filterChevron: { fontSize: 11, color: colors.faint, marginLeft: 6 },
   searchScope: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import Safe from './src/components/Safe'
 import PapersScreen from './src/screens/PapersScreen'
@@ -203,7 +203,14 @@ export default function App() {
             onSeen={onSeen}
           />
         ) : tab === 'favs' ? (
-          <FavoritesScreen prefs={prefs} t={t} patchPrefs={patchPrefs} favs={favs} onToggleFav={onToggleFav} />
+          <FavoritesScreen
+            prefs={prefs}
+            t={t}
+            patchPrefs={patchPrefs}
+            favs={favs}
+            favDois={favs.map((f) => f.doi)}
+            onToggleFav={onToggleFav}
+          />
         ) : (
           <MeScreen
             prefs={prefs}
@@ -248,7 +255,8 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.line,
     paddingTop: 8,
-    paddingBottom: 22,
+    // iOS 的底部安全区已由 Safe 的 SafeAreaView 让开，这里只补一点点留白
+    paddingBottom: Platform.OS === 'ios' ? 8 : 22,
   },
   tabItem: { flex: 1, alignItems: 'center', gap: 5 },
   tabText: { fontSize: 11, color: colors.faint },

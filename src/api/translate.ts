@@ -164,7 +164,9 @@ const FREE_MAX_CHARS = 460
 const FREE_CONCURRENCY = 3
 
 let myMemoryQuotaHit = false
-export const freeQuotaExhausted = () => myMemoryQuotaHit
+/** 只有所有免密钥通道都翻不出来时才提示用户去配 Key */
+let builtinFailed = false
+export const freeQuotaExhausted = () => myMemoryQuotaHit && builtinFailed
 
 async function myMemoryBatch(texts: string[], onProgress?: Progress): Promise<string[]> {
   const out = new Array(texts.length).fill('')
@@ -235,13 +237,55 @@ async function myMemoryOne(text: string): Promise<string> {
 // ------------------------------------------------------------------ 对外
 
 /** 批量翻译（标题用）。返回与入参等长数组，翻不出来的位置是空串 */
+/**
+ * Google 词典翻译（无密钥兜底）：一次请求可用多个 q 参数批量翻。
+ * 网页端同样走 Metro 的 /__gt 代理，原生 App 直连。
+ */
+const GOOGLE = Platform.OS === 'web' ? '/__gt' : 'https://clients5.google.com/translate_a/t'
+const GOOGLE_MAX_ITEMS = 10
+
+async function googleBatch(texts: string[], onProgress?: Progress): Promise<string[]> {
+  const out = new Array(texts.length).fill('')
+  if (!texts.length) return out
+  const chunks: { start: number; items: string[] }[] = []
+  for (let i = 0; i < texts.length; i += GOOGLE_MAX_ITEMS) {
+    chunks.push({ start: i, items: texts.slice(i, i + GOOGLE_MAX_ITEMS) })
+  }
+  await mapLimit(chunks, 2, async ({ start, items }) => {
+    try {
+      const qs = items.map((x) => 'q=' + encodeURIComponent(x)).join('&')
+      const res = await fetch(`${GOOGLE}?client=dict-chrome-ex&sl=en&tl=zh-CN&${qs}`)
+      const data = await res.json()
+      const list: string[] = Array.isArray(data) ? data : []
+      if (list.length === items.length) {
+        list.forEach((t, k) => {
+          out[start + k] = String(t || '').trim()
+        })
+      }
+    } catch {
+      /* 兜底通道失败就留空，界面保持英文 */
+    }
+    onProgress?.([...out])
+  })
+  return out
+}
+
 export async function translateTitles(prefs: Prefs, texts: string[], onProgress?: Progress): Promise<string[]> {
   if (!texts.length) return []
   const clean = texts.map((t) => String(t || '').replace(/\s+/g, ' ').trim())
   if (hasOwnKey(prefs)) return llmBatch(prefs, clean, onProgress)
 
   const out = await transmartBatch(clean, onProgress)
-  const holes = out.map((t, i) => (t ? -1 : i)).filter((i) => i >= 0) as number[]
+  let holes = out.map((t, i) => (t ? -1 : i)).filter((i) => i >= 0) as number[]
+
+  // 腾讯通道没给全时，先走 Google 词典（无配额），再走 MyMemory（有每日额度）
+  if (holes.length) {
+    const filled = await googleBatch(holes.map((i) => clean[i]), onProgress)
+    filled.forEach((t, k) => {
+      if (t) out[holes[k]] = t
+    })
+    holes = out.map((t, i) => (t ? -1 : i)).filter((i) => i >= 0) as number[]
+  }
   if (holes.length) {
     const filled = await myMemoryBatch(holes.map((i) => clean[i]))
     filled.forEach((t, k) => {
@@ -249,6 +293,7 @@ export async function translateTitles(prefs: Prefs, texts: string[], onProgress?
     })
     onProgress?.([...out])
   }
+  builtinFailed = !out.some(Boolean)
   return out
 }
 
@@ -267,6 +312,9 @@ export async function translateOne(prefs: Prefs, text: string): Promise<string> 
   const parts = splitByLength(src, 2400)
   const zh = await transmartBatch(parts)
   if (zh.some(Boolean)) return zh.join(' ')
+
+  const google = await googleBatch(parts)
+  if (google.some(Boolean)) return google.join(' ')
 
   const fallback = await myMemoryBatch(splitByLength(src, 400))
   return fallback.filter(Boolean).join(' ')

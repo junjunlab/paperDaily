@@ -28,7 +28,6 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
   await page.evaluate(() => localStorage.clear())
   await page.reload({ waitUntil: 'networkidle2', timeout: 90000 })
   await sleep(6000)
-
   const clickText = async (text, exact = true) => {
     const ok = await page.evaluate(
       (t, ex) => {
@@ -47,6 +46,10 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
     )
     return ok
   }
+
+  // 首页筛选默认折叠，先展开再点时间/期刊 chip
+  await clickText('筛选', true)
+  await sleep(300)
 
   // 选 3 天
   await clickText('3天')

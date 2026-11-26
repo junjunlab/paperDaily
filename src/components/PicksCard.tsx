@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import type { Dict } from '../i18n'
 import type { Lang, Paper } from '../types'
@@ -22,6 +22,7 @@ export default function PicksCard({
   onOpen: (p: Paper) => void
   onDismiss: () => void
 }) {
+  const [open, setOpen] = useState(false)
   if (!picks.length) return null
 
   return (
@@ -36,7 +37,17 @@ export default function PicksCard({
         </Pressable>
       </View>
 
-      {picks.map((p, i) => {
+      {!open && (
+        <Pressable onPress={() => setOpen(true)} style={styles.peek}>
+          <Text style={styles.peekText}>
+            {picks.length}
+            {t.countSuffix} · {t.pickExpand} ›
+          </Text>
+        </Pressable>
+      )}
+
+      {open &&
+        picks.map((p, i) => {
         const tint = domainColor(p.domain)
         const kind = typeLabel(p.type, p.title, lang)
         return (
@@ -68,7 +79,14 @@ export default function PicksCard({
         )
       })}
 
-      <Text style={styles.foot}>{t.pickFoot}</Text>
+      {open && (
+        <>
+          <Text style={styles.foot}>{t.pickFoot}</Text>
+          <Pressable onPress={() => setOpen(false)} hitSlop={8} style={styles.collapse}>
+            <Text style={styles.collapseText}>{t.pickCollapse} ▴</Text>
+          </Pressable>
+        </>
+      )}
     </View>
   )
 }
@@ -123,4 +141,8 @@ const styles = StyleSheet.create({
     paddingTop: 4,
     paddingBottom: 2,
   },
+  peek: { paddingHorizontal: 14, paddingVertical: 8 },
+  peekText: { fontSize: 12, color: colors.primary, fontWeight: '700' },
+  collapse: { alignSelf: 'center', paddingVertical: 6 },
+  collapseText: { fontSize: 11, color: colors.faint, fontWeight: '600' },
 })

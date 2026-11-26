@@ -2,7 +2,7 @@
   "expo": {
     "name": "一日一论文",
     "slug": "paperdaily",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "scheme": "paperdaily",
     "icon": "./assets/icon.png",
